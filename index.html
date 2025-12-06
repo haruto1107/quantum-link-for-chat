@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>quantum-link for chat</title>
+</head>
+<body>
+  <h1>チャット</h1>
+  <input id="msg" placeholder="メッセージ">
+  <button onclick="sendMessage()">送信</button>
+
+  <div id="chat"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } 
+      from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA7hliguaqhkVXufJPP2X3u0ekIdK4XbWU",
+      authDomain: "quantum-link-for-chat.firebaseapp.com",
+      projectId: "quantum-link-for-chat",
+      storageBucket: "quantum-link-for-chat.firebasestorage.app",
+      messagingSenderId: "222382991426",
+      appId: "1:222382991426:web:43326da4ed94d7fb37a5db",
+      measurementId: "G-1YVZ7HWJJT"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function sendMessage() {
+      const text = document.getElementById("msg").value;
+      await addDoc(collection(db, "messages"), {
+        text: text,
+        time: serverTimestamp()
+      });
+    }
+
+    onSnapshot(collection(db, "messages"), (snap) => {
+      const chat = document.getElementById("chat");
+      chat.innerHTML = ""; 
+      snap.forEach((doc) => {
+        const data = doc.data();
+        const p = document.createElement("p");
+        p.textContent = data.text;
+        chat.appendChild(p);
+      });
+    });
+  </script>
+</body>
+</html>
