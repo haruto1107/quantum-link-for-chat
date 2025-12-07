@@ -1,0 +1,136 @@
+
+加茂晴翔 <hk62603102@gmail.com>
+9:58 (0 分前)
+To 自分
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>quantum-link for chat - ログイン</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+body{font-family:system-ui, -apple-system, "Yu Gothic", sans-serif;padding:20px;}
+.box{max-width:480px;margin:0 auto;}
+input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #ccc}
+button{padding:10px 12px;border-radius:8px;border:none;background:#007bff;color:#fff;margin:6px 4px;cursor:pointer}
+.small{background:#6c757d}
+</style>
+</head>
+<body>
+<div class="box">
+<h2>quantum-link for chat</h2>
+<p>ようこそ。ログインしてください。</p>
+
+<input id="email" type="email" placeholder="メールアドレス" />
+<input id="password" type="password" placeholder="パスワード" />
+
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<button id="loginBtn">ログイン</button>
+<button id="signupBtn" class="small">新規登録</button>
+<button id="resetBtn" class="small">パスワードをお忘れの方</button>
+</div>
+
+<hr/>
+<button id="googleBtn" style="background:#db4437">Googleでログイン</button>
+<p style="color:#666;margin-top:12px">※メール/パスワードまたはGoogleでログインできます。</p>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+import {
+getAuth,
+signInWithEmailAndPassword,
+createUserWithEmailAndPassword,
+sendPasswordResetEmail,
+GoogleAuthProvider,
+signInWithPopup,
+onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+import { getFirestore, setDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyA7hliguaqhkVXufJPP2X3u0ekIdK4XbWU",
+authDomain: "quantum-link-for-chat.firebaseapp.com",
+projectId: "quantum-link-for-chat",
+storageBucket: "quantum-link-for-chat.firebasestorage.app",
+messagingSenderId: "222382991426",
+appId: "1:222382991426:web:43326da4ed94d7fb37a5db",
+measurementId: "G-1YVZ7HWJJT"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+// UI
+const emailEl = document.getElementById('email');
+const passEl = document.getElementById('password');
+document.getElementById('loginBtn').onclick = async () => {
+try {
+await signInWithEmailAndPassword(auth, emailEl.value.trim(), passEl.value);
+alert("ログインに成功しました。");
+// onAuthStateChanged で次画面へ移行
+} catch (e) {
+alert("ログインに失敗しました: " + e.message);
+}
+};
+
+document.getElementById('signupBtn').onclick = async () => {
+try {
+const cred = await createUserWithEmailAndPassword(auth, emailEl.value.trim(), passEl.value);
+// users ドキュメントを作成（最低限）
+await setDoc(doc(db, "users", cred.user.uid), {
+uid: cred.user.uid,
+email: cred.user.email,
+createdAt: serverTimestamp()
+});
+alert("アカウント登録が完了しました。プロフィール設定をお願いします。");
+} catch (e) {
+alert("登録に失敗しました: " + e.message);
+}
+};
+
+document.getElementById('resetBtn').onclick = async () => {
+const email = emailEl.value.trim() || prompt("登録しているメールアドレスを入力してください：");
+if (!email) return;
+try {
+await sendPasswordResetEmail(auth, email);
+alert("パスワード再設定のメールを送信しました。メールをご確認ください。");
+} catch (e) {
+alert("送信に失敗しました: " + e.message);
+}
+};
+
+document.getElementById('googleBtn').onclick = async () => {
+try {
+const result = await signInWithPopup(auth, provider);
+// 新規ユーザーなら users ドキュメントを作成
+const u = result.user;
+await setDoc(doc(db, "users", u.uid), {
+uid: u.uid,
+email: u.email,
+name: u.displayName || "",
+photoURL: u.photoURL || "",
+createdAt: serverTimestamp()
+}, { merge: true });
+alert("Googleアカウントでログインしました。");
+} catch (e) {
+alert("Googleログインに失敗しました: " + e.message);
+}
+};
+
+// ログイン状態変化を監視して遷移（displayNameが無ければsetupへ）
+onAuthStateChanged(auth, async (user) => {
+if (!user) return;
+// displayName がなければプロフィール設定へ
+if (!user.displayName) {
+location.href = "setup.html";
+} else {
+location.href = "chat.html";
+}
+});
+</script>
+</body>
+</html>
