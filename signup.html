@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quantum-Link for Chat | Sign Up</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 380px;
+            margin: auto;
+            background: #fff;
+            padding: 28px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 12px;
+            border: none;
+            border-radius: 6px;
+            background: #28a745;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button.google {
+            background: #db4437;
+            margin-top: 8px;
+        }
+        .link {
+            text-align: center;
+            margin-top: 12px;
+        }
+        #error {
+            color: red;
+            text-align: center;
+            min-height: 20px;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <h2>新規登録</h2>
+
+    <div id="error"></div>
+
+    <input type="email" id="email" placeholder="メールアドレス" />
+    <input type="password" id="password" placeholder="パスワード" />
+    <input type="password" id="password2" placeholder="パスワード（確認用）" />
+
+    <button onclick="createUser()">メールで登録</button>
+    <button class="google" onclick="googleSignup()">Googleで登録</button>
+
+    <div class="link">
+        <a href="login.html">ログインはこちら</a>
+    </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "YOUR_KEY",
+        authDomain: "YOUR_DOMAIN",
+        projectId: "YOUR_ID",
+        appId: "YOUR_APPID"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+
+    function createUser() {
+        const email = document.getElementById("email").value;
+        const pass  = document.getElementById("password").value;
+        const pass2 = document.getElementById("password2").value;
+
+        if (pass !== pass2) {
+            document.getElementById("error").innerText = "パスワードが一致しません。";
+            return;
+        }
+
+        auth.createUserWithEmailAndPassword(email, pass)
+            .then(() => {
+                window.location.href = "profile.html";
+            })
+            .catch(err => {
+                document.getElementById("error").innerText = "登録に失敗しました: " + err.message;
+            });
+    }
+
+    function googleSignup() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        auth.signInWithPopup(provider)
+            .then(() => {
+                window.location.href = "profile.html";
+            })
+            .catch(err => {
+                document.getElementById("error").innerText = "Google登録失敗: " + err.message;
+            });
+    }
+</script>
+
+</body>
+</html>
