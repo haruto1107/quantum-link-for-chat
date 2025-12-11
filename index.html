@@ -2,19 +2,78 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>quantum-link for chat</title>
+  <title>quantum-link for chat - Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{
+      font-family: system-ui, -apple-system, "Yu Gothic", sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .box{
+      max-width: 420px;
+      margin: 40px auto;
+      padding: 24px;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0px 4px 18px rgba(0,0,0,0.1);
+    }
+    input{
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    button{
+      width: 100%;
+      padding: 12px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+      font-size: 15px;
+    }
+    button.google{
+      background: #db4437;
+    }
+    .link{
+      text-align:center;
+      margin-top:12px;
+      font-size:14px;
+    }
+  </style>
 </head>
 <body>
-  <h1>チャット</h1>
-  <input id="msg" placeholder="メッセージ">
-  <button onclick="sendMessage()">送信</button>
+  <div class="box">
+    <h2 style="text-align:center;">quantum-link for chat</h2>
 
-  <div id="chat"></div>
+    <input id="email" type="email" placeholder="メールアドレス" />
+    <input id="password" type="password" placeholder="パスワード" />
+
+    <button id="loginBtn">ログイン</button>
+    <button id="signupBtn" style="background:#28a745;">新規登録</button>
+
+    <button id="googleBtn" class="google">Googleでログイン</button>
+
+    <div class="link">
+      <a href="#" id="resetPass">パスワードを忘れた？</a>
+    </div>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } 
-      from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+    import { 
+      getAuth, 
+      signInWithEmailAndPassword, 
+      createUserWithEmailAndPassword,
+      GoogleAuthProvider,
+      signInWithPopup,
+      sendPasswordResetEmail
+    } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA7hliguaqhkVXufJPP2X3u0ekIdK4XbWU",
@@ -27,26 +86,51 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    const auth = getAuth(app);
 
-    async function sendMessage() {
-      const text = document.getElementById("msg").value;
-      await addDoc(collection(db, "messages"), {
-        text: text,
-        time: serverTimestamp()
-      });
-    }
+    // ログイン
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const email = document.getElementById("email").value;
+      const pass = document.getElementById("password").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+        location.href = "profile.html"; // 初回ならプロフィールへ
+      } catch (e) {
+        alert("ログイン失敗：" + e.message);
+      }
+    });
 
-    onSnapshot(collection(db, "messages"), (snap) => {
-      const chat = document.getElementById("chat");
-      chat.innerHTML = ""; 
-      snap.forEach((doc) => {
-        const data = doc.data();
-        const p = document.createElement("p");
-        p.textContent = data.text;
-        chat.appendChild(p);
-      });
+    // 新規登録
+    document.getElementById("signupBtn").addEventListener("click", async () => {
+      const email = document.getElementById("email").value;
+      const pass = document.getElementById("password").value;
+      try {
+        await createUserWithEmailAndPassword(auth, email, pass);
+        location.href = "profile.html";
+      } catch (e) {
+        alert("登録失敗：" + e.message);
+      }
+    });
+
+    // Google ログイン
+    document.getElementById("googleBtn").addEventListener("click", async () => {
+      const provider = new GoogleAuthProvider();
+      try {
+        await signInWithPopup(auth, provider);
+        location.href = "profile.html";
+      } catch (e) {
+        alert("Googleログイン失敗：" + e.message);
+      }
+    });
+
+    // パスワードリセット
+    document.getElementById("resetPass").addEventListener("click", async () => {
+      const email = document.getElementById("email").value;
+      if (!email) return alert("メールアドレスを入力してください");
+      await sendPasswordResetEmail(auth, email);
+      alert("パスワード再設定メールを送信しました");
     });
   </script>
+
 </body>
 </html>
