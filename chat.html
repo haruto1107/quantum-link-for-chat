@@ -1,273 +1,272 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8" />
-<title>quantum-link for chat</title>
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<style>
-:root{--me:#d1f1ff;--other:#f6f6f6}
-body{font-family:system-ui, -apple-system, "Yu Gothic", sans-serif;margin:0;padding:0;background:#fff}
-header{background:#00c3ff;color:#fff;padding:12px;display:flex;justify-content:space-between;align-items:center}
-.wrap{display:flex;height:calc(100vh - 56px)}
-.sidebar{width:320px;border-right:1px solid #eee;padding:12px;box-sizing:border-box;overflow:auto}
-.main{flex:1;display:flex;flex-direction:column}
-.thread{padding:8px;border-radius:8px;display:flex;gap:8px;align-items:center;cursor:pointer}
-.thread:hover{background:#f3f9ff}
-.thread img{width:44px;height:44px;border-radius:50%;object-fit:cover}
-.thread .meta{flex:1}
-#chatArea{flex:1;padding:12px;overflow:auto}
-.msg{max-width:70%;padding:8px 10px;border-radius:12px;margin:8px 0;word-break:break-word}
-.me{background:var(--me);margin-left:auto;text-align:right}
-.other{background:var(--other);margin-right:auto;text-align:left}
-.metaSmall{font-size:12px;color:#666;margin-top:6px}
-.inputBar{display:flex;padding:10px;border-top:1px solid #eee;gap:8px}
-.textIn{flex:1;padding:10px;border-radius:20px;border:1px solid #ccc}
-.btn{padding:10px 12px;border-radius:10px;border:none;background:#007bff;color:#fff}
-.small{padding:8px 10px;border-radius:8px;border:1px solid #ccc;background:#fff}
-.topControls{display:flex;gap:8px;margin-bottom:8px}
-</style>
+  <meta charset="UTF-8" />
+  <title>quantum-link for chat</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+
+    /* 左側：ルーム一覧 */
+    #sidebar {
+      width: 280px;
+      background: #f2f2f2;
+      border-right: 1px solid #ccc;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .room {
+      padding: 10px;
+      background: #fff;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .room:hover {
+      background: #e8e8e8;
+    }
+
+    /* 右側：チャット画面 */
+    #chatArea {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #chatHeader {
+      padding: 15px;
+      border-bottom: 1px solid #ddd;
+      font-size: 20px;
+      background: #fff;
+    }
+
+    #chat {
+      flex-grow: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background: #fafafa;
+    }
+
+    .msg {
+      padding: 8px 12px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      max-width: 70%;
+      position: relative;
+      font-size: 15px;
+    }
+
+    .me {
+      background: #d1ffd6;
+      margin-left: auto;
+    }
+
+    .other {
+      background: #ffffff;
+      border: 1px solid #ddd;
+    }
+
+    .icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .msgWrap {
+      display: flex;
+      align-items: flex-end;
+      margin-bottom: 10px;
+    }
+
+    .otherWrap {
+      flex-direction: row;
+    }
+
+    .meWrap {
+      flex-direction: row-reverse;
+    }
+
+    .read {
+      font-size: 11px;
+      color: #666;
+      margin-top: 3px;
+      text-align: right;
+    }
+
+    #inputArea {
+      display: flex;
+      padding: 12px;
+      border-top: 1px solid #ddd;
+      background: #fff;
+    }
+
+    #msg {
+      flex-grow: 1;
+      padding: 10px;
+      font-size: 15px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    #sendBtn {
+      padding: 10px 18px;
+      margin-left: 8px;
+      border: none;
+      background: #007bff;
+      color: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-<header>
-<div>quantum-link for chat</div>
-<div id="userArea">未ログイン</div>
-</header>
 
-<div class="wrap">
-<div class="sidebar">
-<div class="topControls">
-<button id="newDM" class="small">個人チャット作成</button>
-<button id="newGroup" class="small">グループ作成</button>
-</div>
-<h4>トーク一覧</h4>
-<div id="threadList"></div>
-</div>
+  <!-- ルーム一覧 -->
+  <div id="sidebar">
+    <h2>Chats</h2>
+    <div id="roomList"></div>
+  </div>
 
-<div class="main">
-<div id="chatArea"><p style="color:#666">スレッドを選択してください</p></div>
+  <!-- チャット画面 -->
+  <div id="chatArea">
+    <div id="chatHeader">Select a chat</div>
+    <div id="chat"></div>
 
-<div class="inputBar">
-<input id="fileInput" type="file" accept="image/*" style="display:none" />
-<button id="imgBtn" class="small">画像</button>
-<input id="textIn" class="textIn" placeholder="メッセージを入力..." />
-<button id="sendBtn" class="btn">送信</button>
-</div>
-</div>
-</div>
+    <div id="inputArea">
+      <input id="msg" placeholder="メッセージを入力…" />
+      <button id="sendBtn">送信</button>
+    </div>
+  </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-import {
-getAuth, onAuthStateChanged, signOut
-} from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-import {
-getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, setDoc, serverTimestamp, updateDoc, arrayUnion
-} from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
-import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-storage.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, updateDoc,
+      onSnapshot, doc, query, orderBy, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-const firebaseConfig = {
-apiKey: "AIzaSyA7hliguaqhkVXufJPP2X3u0ekIdK4XbWU",
-authDomain: "quantum-link-for-chat.firebaseapp.com",
-projectId: "quantum-link-for-chat",
-storageBucket: "quantum-link-for-chat.firebasestorage.app",
-messagingSenderId: "222382991426",
-appId: "1:222382991426:web:43326da4ed94d7fb37a5db",
-measurementId: "G-1YVZ7HWJJT"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
+    import {
+      getAuth, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 
-// UI refs
-const userArea = document.getElementById('userArea');
-const threadListEl = document.getElementById('threadList');
-const chatArea = document.getElementById('chatArea');
-const newDMBtn = document.getElementById('newDM');
-const newGroupBtn = document.getElementById('newGroup');
-const fileInput = document.getElementById('fileInput');
-const imgBtn = document.getElementById('imgBtn');
-const sendBtn = document.getElementById('sendBtn');
-const textIn = document.getElementById('textIn');
+    const firebaseConfig = {
+      apiKey: "AIzaSyA7hliguaqhkVXufJPP2X3u0ekIdK4XbWU",
+      authDomain: "quantum-link-for-chat.firebaseapp.com",
+      projectId: "quantum-link-for-chat",
+      storageBucket: "quantum-link-for-chat.firebasestorage.app",
+      messagingSenderId: "222382991426",
+      appId: "1:222382991426:web:43326da4ed94d7fb37a5db",
+      measurementId: "G-1YVZ7HWJJT",
+    };
 
-let currentUser = null;
-let currentThreadId = null;
-let threadUnsub = null;
-let messagesUnsub = null;
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth();
 
-// --- auth state
-onAuthStateChanged(auth, (user) => {
-if (!user) {
-location.href = "login.html";
-return;
-}
-currentUser = user;
-userArea.innerHTML = `${user.displayName || user.email} <button id="logoutBtn" class="small">ログアウト</button>`;
-document.getElementById('logoutBtn').onclick = async () => {
-await signOut(auth);
-location.href = "login.html";
-};
-// load threads for this user
-loadThreads();
-});
+    let currentUser = null;
+    let currentRoom = null;
 
-// --- threads
-async function loadThreads(){
-threadListEl.innerHTML = "<p style='color:#666'>読み込み中...</p>";
-// threads where members include currentUser.uid
-const q = query(collection(db, "threads"), where("members", "array-contains", currentUser.uid), orderBy("updatedAt", "desc"));
-if (threadUnsub) threadUnsub();
-threadUnsub = onSnapshot(q, (snap) => {
-threadListEl.innerHTML = "";
-snap.forEach(docSnap => {
-const d = docSnap.data();
-const id = docSnap.id;
-const el = document.createElement('div');
-el.className = 'thread';
-el.innerHTML = `<img src="${d.photoURL || 'https://via.placeholder.com/44'}" /><div class="meta"><strong>${d.name}</strong><div style="font-size:12px;color:#666">${d.lastMessage || ''}</div></div>`;
-el.onclick = () => openThread(id, d);
-threadListEl.appendChild(el);
-});
-});
-}
+    // 認証
+    onAuthStateChanged(auth, (user) => {
+      if (!user) location.href = "login.html";
+      currentUser = user;
+      loadRooms();
+    });
 
-// --- create DM (prompt for other user's uid or email)
-newDMBtn.onclick = async () => {
-const input = prompt("相手のメールアドレスを入力してください（既に登録済みのメール）:");
-if (!input) return;
-// find user by email
-const usersQ = query(collection(db, "users"), where("email", "==", input));
-const snap = await (await usersQ.getDocs?.() ? usersQ.getDocs() : db); // fallback (older browsers) - but we will do a simple approach
-// simpler: query with onSnapshot one-time (use getDocs normally)
-// Use getDocs:
-const { getDocs } = await import("https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js");
-const found = await getDocs(query(collection(db,"users"), where("email","==",input)));
-if (found.empty) return alert("ユーザーが見つかりません。相手は登録済みですか？");
-const other = found.docs[0].data();
-// create deterministic thread id for DM (sorted uids)
-const uids = [currentUser.uid, other.uid].sort();
-const threadId = uids.join("_");
-// ensure thread doc exists
-await setDoc(doc(db,"threads",threadId), {
-type: "dm",
-members: uids,
-name: other.name || other.email,
-photoURL: other.photoURL || "",
-lastMessage: "",
-updatedAt: serverTimestamp()
-}, { merge: true });
-loadThreads();
-openThread(threadId, {name: other.name || other.email, photoURL: other.photoURL || ""});
-};
+    // 🔥 ルーム読み込み
+    function loadRooms() {
+      onSnapshot(collection(db, "rooms"), (snap) => {
+        const list = document.getElementById("roomList");
+        list.innerHTML = "";
+        snap.forEach((r) => {
+          const data = r.data();
+          const div = document.createElement("div");
+          div.className = "room";
+          div.textContent = data.name;
+          div.onclick = () => openRoom(r.id, data.name);
+          list.appendChild(div);
+        });
+      });
+    }
 
-// --- create Group
-newGroupBtn.onclick = async () => {
-const name = prompt("グループ名を入力してください：");
-if (!name) return;
-const membersInput = prompt("メンバーのメールアドレスをカンマ区切りで入力してください（自分を含めても良い）：");
-const emails = membersInput ? membersInput.split(",").map(s=>s.trim()).filter(Boolean) : [];
-// resolve emails to uids (simple)
-const { getDocs } = await import("https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js");
-const uids = [currentUser.uid];
-for (const em of emails) {
-if (!em) continue;
-const f = await getDocs(query(collection(db,"users"), where("email","==",em)));
-if (!f.empty) uids.push(f.docs[0].data().uid);
-}
-// create thread doc with auto id
-const tRef = await addDoc(collection(db, "threads"), {
-type: "group",
-members: Array.from(new Set(uids)),
-name: name,
-photoURL: "",
-lastMessage: "",
-updatedAt: serverTimestamp()
-});
-loadThreads();
-openThread(tRef.id, {name:name, photoURL:""});
-};
+    // 🔥 ルームを開く
+    function openRoom(roomId, name) {
+      currentRoom = roomId;
+      document.getElementById("chatHeader").textContent = name;
+      loadMessages(roomId);
+    }
 
-// --- open thread
-async function openThread(threadId, threadMeta) {
-currentThreadId = threadId;
-// load messages from collection: messages/{threadId}/items
-chatArea.innerHTML = "<p style='color:#666'>読み込み中...</p>";
+    // 🔥 メッセージ読み込み
+    function loadMessages(roomId) {
+      const q = query(
+        collection(db, "rooms", roomId, "messages"),
+        orderBy("time")
+      );
 
-// unsubscribe previous
-if (messagesUnsub) messagesUnsub();
+      onSnapshot(q, (snap) => {
+        const area = document.getElementById("chat");
+        area.innerHTML = "";
 
-const msgsCol = collection(db, "messages", threadId, "items");
-const q = query(msgsCol, orderBy("time"));
-messagesUnsub = onSnapshot(q, async (snap) => {
-chatArea.innerHTML = "";
-const docs = [];
-snap.forEach(s => docs.push({ id: s.id, data: s.data() }));
-for (const item of docs) {
-const d = item.data;
-const isMe = d.uid === currentUser.uid;
-// auto mark read (if not already)
-if (currentUser && Array.isArray(d.read) && !d.read.includes(currentUser.uid)) {
-try {
-await updateDoc(doc(db, "messages", threadId, "items", item.id), {
-read: arrayUnion(currentUser.uid)
-});
-} catch(e){ console.warn("既読更新失敗", e); }
-}
-const el = document.createElement('div');
-el.className = 'msg ' + (isMe ? 'me' : 'other');
-let html = `<div><strong>${d.name || "名無し"}</strong></div>`;
-if (d.text) html += `<div>${escapeHtml(d.text)}</div>`;
-if (d.image) html += `<div><img src="${d.image}" style="max-width:220px;border-radius:8px;margin-top:6px"></div>`;
-html += `<div class="metaSmall">${formatTime(d.time?.toMillis?.() || Date.now())} <span style="margin-left:8px;">既読:${(Array.isArray(d.read)?d.read.length:0)}</span></div>`;
-el.innerHTML = html;
-chatArea.appendChild(el);
-}
-chatArea.scrollTop = chatArea.scrollHeight;
-});
-}
+        snap.forEach(async (d) => {
+          const msg = d.data();
+          const wrap = document.createElement("div");
+          wrap.className = "msgWrap " + (msg.uid === currentUser.uid ? "meWrap" : "otherWrap");
 
-// --- send message (to current thread)
-sendBtn.onclick = async () => {
-if (!currentThreadId) return alert("先にスレッドを選択してください");
-const text = textIn.value.trim();
-if (!text && !fileInput.files[0]) return;
-let imageUrl = "";
-if (fileInput.files[0]) {
-const file = fileInput.files[0];
-const path = `images/${currentThreadId}/${Date.now()}_${file.name}`;
-const ref = sRef(storage, path);
-const task = uploadBytesResumable(ref, file);
-await new Promise((resolve, reject) => {
-task.on('state_changed', null, (err) => reject(err), () => resolve());
-});
-imageUrl = await getDownloadURL(task.snapshot.ref);
-fileInput.value = "";
-}
-// add message doc under messages/{threadId}/items
-await addDoc(collection(db, "messages", currentThreadId, "items"), {
-text: text || "",
-image: imageUrl || "",
-uid: currentUser.uid,
-name: currentUser.displayName || currentUser.email,
-time: serverTimestamp(),
-read: []
-});
-// update threads lastMessage
-await updateDoc(doc(db, "threads", currentThreadId), {
-lastMessage: text ? text : (imageUrl ? "画像" : ""),
-updatedAt: serverTimestamp()
-});
-textIn.value = "";
-};
+          const bubble = document.createElement("div");
+          bubble.className = "msg " + (msg.uid === currentUser.uid ? "me" : "other");
+          bubble.textContent = msg.text;
 
-imgBtn.onclick = () => fileInput.click();
+          const read = document.createElement("div");
+          read.className = "read";
 
-// helper
-function formatTime(ts) {
-const t = ts ? new Date(ts) : new Date();
-return `${t.getFullYear()}/${(t.getMonth()+1)}-${t.getDate()} ${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`;
-}
-function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
-</script>
+          // 既読人数
+          if (msg.uid === currentUser.uid) {
+            const count = msg.readBy ? msg.readBy.length - 1 : 0;
+            read.textContent = count > 0 ? `既読 ${count}` : "未読";
+          }
+
+          bubble.appendChild(read);
+
+          wrap.appendChild(bubble);
+          area.appendChild(wrap);
+
+          // 自分以外 → 既読つける
+          if (msg.uid !== currentUser.uid) {
+            const arr = msg.readBy ?? [];
+            if (!arr.includes(currentUser.uid)) {
+              await updateDoc(doc(db, "rooms", roomId, "messages", d.id), {
+                readBy: [...arr, currentUser.uid]
+              });
+            }
+          }
+        });
+
+        area.scrollTop = area.scrollHeight;
+      });
+    }
+
+    // 🔥 メッセージ送信
+    document.getElementById("sendBtn").onclick = async () => {
+      const text = document.getElementById("msg").value;
+      if (!text || !currentRoom) return;
+
+      await addDoc(collection(db, "rooms", currentRoom, "messages"), {
+        text,
+        uid: currentUser.uid,
+        img: currentUser.photoURL ?? "",
+        readBy: [],
+        time: serverTimestamp()
+      });
+
+      document.getElementById("msg").value = "";
+    };
+  </script>
 </body>
 </html>
