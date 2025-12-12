@@ -1,128 +1,82 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quantum-Link for Chat | Sign Up</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 40px;
-            background: #f5f5f5;
-        }
-        .container {
-            max-width: 380px;
-            margin: auto;
-            background: #fff;
-            padding: 28px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        h2 {
-            margin-top: 0;
-            text-align: center;
-        }
-        input {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-        }
-        button {
-            width: 100%;
-            padding: 14px;
-            margin-top: 12px;
-            border: none;
-            border-radius: 6px;
-            background: #28a745;
-            color: #fff;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        button.google {
-            background: #db4437;
-            margin-top: 8px;
-        }
-        .link {
-            text-align: center;
-            margin-top: 12px;
-        }
-        #error {
-            color: red;
-            text-align: center;
-            min-height: 20px;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <title>quantum-link for chat - Sign Up</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{font-family:system-ui,-apple-system,"Yu Gothic",sans-serif;padding:20px;background:#f2f2f2}
+    .box{max-width:400px;margin:0 auto;background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+    h2{text-align:center;margin-bottom:20px;}
+    input{width:100%;padding:12px;margin:8px 0;border:1px solid #ccc;border-radius:10px}
+    button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:10px;background:#007bff;color:#fff;font-size:16px;cursor:pointer}
+    .google{background:#fff;border:1px solid #ccc;color:#333}
+    .link{text-align:center;margin-top:12px;font-size:14px}
+  </style>
 </head>
-
 <body>
-<div class="container">
+
+  <div class="box">
     <h2>新規登録</h2>
+    
+    <input id="email" type="email" placeholder="メールアドレス" />
+    <input id="password" type="password" placeholder="パスワード" />
+    <button id="signupBtn">アカウント作成</button>
 
-    <div id="error"></div>
-
-    <input type="email" id="email" placeholder="メールアドレス" />
-    <input type="password" id="password" placeholder="パスワード" />
-    <input type="password" id="password2" placeholder="パスワード（確認用）" />
-
-    <button onclick="createUser()">メールで登録</button>
-    <button class="google" onclick="googleSignup()">Googleで登録</button>
+    <button class="google" id="googleBtn">Google でログイン</button>
 
     <div class="link">
-        <a href="login.html">ログインはこちら</a>
+      <a href="login.html">ログインはこちら</a>
     </div>
-</div>
+  </div>
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+    import { 
+      getAuth, 
+      createUserWithEmailAndPassword, 
+      GoogleAuthProvider, 
+      signInWithPopup 
+    } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 
-<script>
     const firebaseConfig = {
-        apiKey: "YOUR_KEY",
-        authDomain: "YOUR_DOMAIN",
-        projectId: "YOUR_ID",
-        appId: "YOUR_APPID"
+      apiKey: "AIzaSyA7hliguaqhkVXufJPP2X3u0ekIdK4XbWU",
+      authDomain: "quantum-link-for-chat.firebaseapp.com",
+      projectId: "quantum-link-for-chat",
+      storageBucket: "quantum-link-for-chat.firebasestorage.app",
+      messagingSenderId: "222382991426",
+      appId: "1:222382991426:web:43326da4ed94d7fb37a5db",
+      measurementId: "G-1YVZ7HWJJT"
+    };
+    
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    // メール登録
+    document.getElementById("signupBtn").onclick = async () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert("登録完了！プロフィール設定へ進みます。");
+        location.href = "profile.html";
+      } catch (e) {
+        alert("エラー: " + e.message);
+      }
     };
 
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-
-
-    function createUser() {
-        const email = document.getElementById("email").value;
-        const pass  = document.getElementById("password").value;
-        const pass2 = document.getElementById("password2").value;
-
-        if (pass !== pass2) {
-            document.getElementById("error").innerText = "パスワードが一致しません。";
-            return;
-        }
-
-        auth.createUserWithEmailAndPassword(email, pass)
-            .then(() => {
-                window.location.href = "profile.html";
-            })
-            .catch(err => {
-                document.getElementById("error").innerText = "登録に失敗しました: " + err.message;
-            });
-    }
-
-    function googleSignup() {
-        const provider = new firebase.auth.GoogleAuthProvider();
-
-        auth.signInWithPopup(provider)
-            .then(() => {
-                window.location.href = "profile.html";
-            })
-            .catch(err => {
-                document.getElementById("error").innerText = "Google登録失敗: " + err.message;
-            });
-    }
-</script>
+    // Googleログイン
+    document.getElementById("googleBtn").onclick = async () => {
+      try {
+        await signInWithPopup(auth, provider);
+        location.href = "profile.html";
+      } catch (e) {
+        alert("エラー: " + e.message);
+      }
+    };
+  </script>
 
 </body>
 </html>
