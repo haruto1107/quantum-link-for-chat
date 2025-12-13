@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>Quantum-Link for Chat | Profile</title>
+  <title>quantum-Link for Chat | Profile</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
@@ -64,7 +64,7 @@
     <div id="avatarPreview"></div>
     <input id="avatarFile" type="file" accept="image/*" />
 
-    <input id="nameInput" placeholder="表示名（例：晴翔）" />
+    <input id="nameInput" placeholder="表示名（例：quantum-link for Chat）" />
 
     <button id="saveBtn">保存してチャットへ</button>
   </div>
@@ -182,9 +182,10 @@
         updatedAt: serverTimestamp()
       }, { merge: true });
 
-      alert("プロフィール保存完了！");
+      alert("プロフィールが保存されました。");
       location.href = "chat.html";
     });
   </script>
 </body>
 </html>
+
