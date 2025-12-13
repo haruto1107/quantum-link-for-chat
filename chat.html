@@ -3,125 +3,69 @@
 <head>
   <meta charset="utf-8">
   <title>quantum-link for chat</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
 </head>
 <body>
+  <h2>quantum-link for chat</h2>
 
-<div class="navbar">quantum-link for chat</div>
+  <div id="chat"></div>
 
-<div class="page">
+  <input id="msg" placeholder="メッセージ">
+  <button id="send">送信</button>
 
-  <select id="roomSelect" class="input">
-    <option value="public">🌍 Public Chat</option>
-  </select>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      query,
+      orderBy,
+      onSnapshot,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-  <div id="chatArea" class="chat-list"></div>
+    const firebaseConfig = {
+      apiKey: "AIzaSyA7hliguaqhkVXufJPP2X3u0ekIdK4XbWU",
+      authDomain: "quantum-link-for-chat.firebaseapp.com",
+      projectId: "quantum-link-for-chat",
+      storageBucket: "quantum-link-for-chat.firebasestorage.app",
+      messagingSenderId: "222382991426",
+      appId: "1:222382991426:web:43326da4ed94d7fb37a5db"
+    };
 
-  <div style="display:flex;gap:8px;margin-top:12px">
-    <input id="msg" class="input" style="flex:1" placeholder="メッセージ">
-    <button id="send" class="btn btn-primary">送信</button>
-  </div>
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-</div>
+    let user = null;
 
-<script type="module">
-
-  import { app } from "./firebase.js";
-  import {
-    getFirestore, collection, addDoc, query, orderBy, onSnapshot,
-    updateDoc, doc, serverTimestamp, setDoc, getDocs
-  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
-
-  import {
-    getAuth, onAuthStateChanged
-  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-
-  let currentUser = null;
-  let currentRoom = "public";
-
-  // ログイン確認
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      location.href = "login.html";
-      return;
-    }
-    currentUser = user;
-
-    // 1対1チャット用にユーザー一覧取得
-    const users = await getDocs(collection(db, "users"));
-    users.forEach(u => {
-      if (u.id !== user.uid) {
-        roomSelect.innerHTML += `<option value="dm_${user.uid}_${u.id}">${u.data().name} とチャット</option>`;
-      }
+    onAuthStateChanged(auth, (u) => {
+      if (!u) location.href = "login.html";
+      user = u;
     });
 
-    loadRoom(currentRoom);
-  });
+    const q = query(collection(db, "messages"), orderBy("time"));
 
-  // 部屋変更
-  roomSelect.onchange = () => {
-    currentRoom = roomSelect.value;
-    loadRoom(currentRoom);
-  };
-
-  // メッセージ送信
-  send.onclick = async () => {
-    const text = msg.value.trim();
-    if (!text) return;
-
-    await addDoc(collection(db, "rooms", currentRoom, "messages"), {
-      uid: currentUser.uid,
-      text,
-      time: serverTimestamp(),
-      read: false
+    onSnapshot(q, (snap) => {
+      chat.innerHTML = "";
+      snap.forEach(d => {
+        const p = document.createElement("p");
+        p.textContent = d.data().text;
+        chat.appendChild(p);
+      });
     });
 
-    msg.value = "";
-  };
-
-  // メッセージ読み込み
-  function loadRoom(room) {
-    const q = query(
-      collection(db, "rooms", room, "messages"),
-      orderBy("time")
-    );
-
-    onSnapshot(q, async (snap) => {
-      chatArea.innerHTML = "";
-
-      for (const m of snap.docs) {
-        const d = m.data();
-        const mine = d.uid === currentUser.uid;
-        const div = document.createElement("div");
-        div.className = "msg " + (mine ? "my" : "other");
-        div.innerHTML = d.text;
-
-        // 既読
-        if (!mine && !d.read) {
-          await updateDoc(doc(db, "rooms", room, "messages", m.id), {
-            read: true
-          });
-        }
-
-        chatArea.appendChild(div);
-
-        // 送ったメッセージの既読表示
-        if (mine) {
-          const rd = document.createElement("div");
-          rd.className = "read";
-          rd.textContent = d.read ? "既読" : "未読";
-          chatArea.appendChild(rd);
-        }
-      }
-
-      chatArea.scrollTop = chatArea.scrollHeight;
-    });
-  }
-
-</script>
-
+    send.onclick = async () => {
+      if (!msg.value) return;
+      await addDoc(collection(db, "messages"), {
+        text: msg.value,
+        uid: user.uid,
+        time: serverTimestamp()
+      });
+      msg.value = "";
+    };
+  </script>
 </body>
 </html>
