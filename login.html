@@ -2,78 +2,47 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>quantum-link for chat - Login</title>
+  <title>ログイン - quantum-link for chat</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <style>
-    body{font-family:system-ui,-apple-system,"Yu Gothic",sans-serif;padding:20px;background:#f5f5f5}
-    .box{max-width:420px;margin:60px auto;padding:24px;border-radius:16px;background:#fff;
-         box-shadow:0 4px 16px rgba(0,0,0,0.1);}
-    input{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #ccc}
-    button{width:100%;padding:12px;border-radius:8px;border:none;font-size:16px;cursor:pointer}
-    .primary{background:#007bff;color:#fff}
-    .google{background:#db4437;color:#fff;margin-top:12px}
-    a{text-decoration:none;color:#007bff}
-  </style>
 </head>
 <body>
+  <h2>ログイン / 新規登録</h2>
 
-  <div class="box">
-    <h2 style="text-align:center;margin-bottom:20px">ログイン</h2>
-
-    <input id="email" type="email" placeholder="メールアドレス" />
-    <input id="password" type="password" placeholder="パスワード" />
-
-    <button class="primary" id="loginBtn">ログイン</button>
-    <button class="google" id="googleBtn">Googleでログイン</button>
-
-    <p style="margin-top:16px;text-align:center">
-      <a href="signup.html">アカウントを作成する</a>
-    </p>
-  </div>
+  <input id="email" placeholder="メールアドレス">
+  <input id="password" type="password" placeholder="パスワード">
+  <br><br>
+  <button id="loginBtn">ログイン</button>
+  <button id="signupBtn">新規登録</button>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-    import { 
-      getAuth, 
+    import {
+      getAuth,
       signInWithEmailAndPassword,
-      GoogleAuthProvider,
-      signInWithPopup
+      createUserWithEmailAndPassword
     } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA7hliguaqhkVXufJPP2X3u0ekIdK4XbWU",
       authDomain: "quantum-link-for-chat.firebaseapp.com",
       projectId: "quantum-link-for-chat",
-      storageBucket: "quantum-link-for-chat.firebasestorage.app"
+      storageBucket: "quantum-link-for-chat.firebasestorage.app",
+      messagingSenderId: "222382991426",
+      appId: "1:222382991426:web:43326da4ed94d7fb37a5db"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // メールログイン
-    document.getElementById("loginBtn").onclick = async () => {
-      const email = document.getElementById("email").value;
-      const pass = document.getElementById("password").value;
-
-      try {
-        await signInWithEmailAndPassword(auth, email, pass);
-        location.href = "profile.html";
-      } catch (e) {
-        alert("ログインできませんでした: " + e.message);
-      }
+    loginBtn.onclick = async () => {
+      await signInWithEmailAndPassword(auth, email.value, password.value);
+      location.href = "index.html";
     };
 
-    // Googleログイン
-    document.getElementById("googleBtn").onclick = async () => {
-      try {
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
-        location.href = "profile.html";
-      } catch (e) {
-        alert("Googleログイン失敗: " + e.message);
-      }
+    signupBtn.onclick = async () => {
+      await createUserWithEmailAndPassword(auth, email.value, password.value);
+      location.href = "profile.html";
     };
   </script>
-
 </body>
 </html>
