@@ -1,70 +1,104 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>Login | quantum-link</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
+  <meta charset="UTF-8" />
+  <title>Quantum-Link for Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
-      font-family: system-ui, -apple-system, "Yu Gothic", sans-serif;
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont;
       background: #f5f5f5;
       display: flex;
-      justify-content: center;
-      align-items: center;
+      flex-direction: column;
       height: 100vh;
     }
-    .box {
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      width: 100%;
-      max-width: 320px;
-      box-sizing: border-box;
+
+    header {
+      background: #06c755;
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
     }
-    h2 {
-      margin-top: 0;
-      text-align: center;
+
+    #messages {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
     }
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 10px;
-      box-sizing: border-box;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
+
+    .message {
+      background: white;
+      padding: 8px 12px;
+      border-radius: 12px;
       margin-bottom: 8px;
+      max-width: 70%;
     }
-    .login { background: #06c755; color: #fff; }
-    .register { background: #333; color: #fff; }
-    .hidden { display: none; }
+
+    footer {
+      display: flex;
+      padding: 8px;
+      background: #eee;
+    }
+
+    input {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-right: 8px;
+    }
+
+    button {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: none;
+      background: #06c755;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .logout {
+      background: transparent;
+      color: white;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+    }
   </style>
 </head>
-
 <body>
 
-<div class="box">
-  <h2 id="title">ログイン</h2>
+<header>
+  Quantum-Link for Chat
+  <button class="logout" onclick="logout()">ログアウト</button>
+</header>
 
-  <input id="email" type="email" placeholder="メールアドレス">
-  <input id="password" type="password" placeholder="パスワード">
+<div id="messages"></div>
 
-  <button class="login" id="loginBtn">ログイン</button>
-  <button class="register" id="showRegisterBtn">新規登録</button>
-
-  <button class="register hidden" id="registerBtn">登録する</button>
-</div>
+<footer>
+  <input id="messageInput" type="text" placeholder="メッセージを入力" />
+  <button onclick="sendMessage()">送信</button>
+</footer>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } 
-    from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    query,
+    orderBy,
+    onSnapshot,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+  // 🔧 Firebase設定
   const firebaseConfig = {
     apiKey: "AIzaSyA7hliguaqhkVXufJPP2X3u0ekIdK4XbWU",
     authDomain: "quantum-link-for-chat.firebaseapp.com",
@@ -76,41 +110,64 @@
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const db = getFirestore(app);
 
-  const email = document.getElementById("email");
-  const password = document.getElementById("password");
+  let currentUser = null;
 
-  const loginBtn = document.getElementById("loginBtn");
-  const showRegisterBtn = document.getElementById("showRegisterBtn");
-  const registerBtn = document.getElementById("registerBtn");
-  const title = document.getElementById("title");
-
-  // 🔐 ログイン
-  loginBtn.onclick = async () => {
-    try {
-      await signInWithEmailAndPassword(auth, email.value, password.value);
-      location.href = "chat.html";
-    } catch (e) {
-      alert("ログイン失敗: " + e.message);
+  // 🔐 ログインチェック
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      window.location.href = "login.html";
+    } else {
+      currentUser = user;
+      startChat();
     }
+  });
+
+  // 💬 チャット開始
+  function startChat() {
+    const q = query(
+      collection(db, "messages"),
+      orderBy("createdAt")
+    );
+
+    onSnapshot(q, (snapshot) => {
+      const messagesDiv = document.getElementById("messages");
+      messagesDiv.innerHTML = "";
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const div = document.createElement("div");
+        div.className = "message";
+        div.textContent = `${data.name}: ${data.text}`;
+        messagesDiv.appendChild(div);
+      });
+
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+  }
+
+  // 📤 メッセージ送信
+  window.sendMessage = async () => {
+    const input = document.getElementById("messageInput");
+    const text = input.value.trim();
+    if (!text) return;
+
+    await addDoc(collection(db, "messages"), {
+      text: text,
+      name: currentUser.email,
+      uid: currentUser.uid,
+      createdAt: serverTimestamp()
+    });
+
+    input.value = "";
   };
 
-  // 🆕 新規登録画面へ切り替え
-  showRegisterBtn.onclick = () => {
-    title.textContent = "新規登録";
-    loginBtn.classList.add("hidden");
-    showRegisterBtn.classList.add("hidden");
-    registerBtn.classList.remove("hidden");
-  };
-
-  // 🆕 実際の登録処理
-  registerBtn.onclick = async () => {
-    try {
-      await createUserWithEmailAndPassword(auth, email.value, password.value);
-      location.href = "chat.html";
-    } catch (e) {
-      alert("登録失敗: " + e.message);
-    }
+  // 🚪 ログアウト
+  window.logout = () => {
+    signOut(auth).then(() => {
+      window.location.href = "login.html";
+    });
   };
 </script>
 
