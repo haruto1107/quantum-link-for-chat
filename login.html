@@ -1,48 +1,153 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <title>ログイン - quantum-link for chat</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8">
+  <title>Login | quantum-link for chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Yu Gothic", sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .box {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 340px;
+      box-sizing: border-box;
+    }
+    h2 {
+      text-align: center;
+      margin-top: 0;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .login {
+      background: #06c755;
+      color: #fff;
+    }
+    .register {
+      background: #333;
+      color: #fff;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
+
 <body>
-  <h2>ログイン / 新規登録</h2>
 
-  <input id="email" placeholder="メールアドレス">
-  <input id="password" type="password" placeholder="パスワード">
-  <br><br>
-  <button id="loginBtn">ログイン</button>
-  <button id="signupBtn">新規登録</button>
+<div class="box">
+  <h2 id="title">ログイン</h2>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-    import {
-      getAuth,
-      signInWithEmailAndPassword,
-      createUserWithEmailAndPassword
-    } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+  <input id="email" type="email" placeholder="メールアドレス">
+  <input id="password" type="password" placeholder="パスワード（6文字以上）">
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyA7hliguaqhkVXufJPP2X3u0ekIdK4XbWU",
-      authDomain: "quantum-link-for-chat.firebaseapp.com",
-      projectId: "quantum-link-for-chat",
-      storageBucket: "quantum-link-for-chat.firebasestorage.app",
-      messagingSenderId: "222382991426",
-      appId: "1:222382991426:web:43326da4ed94d7fb37a5db"
-    };
+  <button id="loginBtn" class="login" type="button">ログイン</button>
+  <button id="showRegisterBtn" class="register" type="button">新規登録</button>
+  <button id="registerBtn" class="register hidden" type="button">登録する</button>
+</div>
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 
-    loginBtn.onclick = async () => {
-      await signInWithEmailAndPassword(auth, email.value, password.value);
-      location.href = "index.html";
-    };
+  // Firebase 設定
+  const firebaseConfig = {
+    apiKey: "AIzaSyA7hliguaqhkVXufJPP2X3u0ekIdK4XbWU",
+    authDomain: "quantum-link-for-chat.firebaseapp.com",
+    projectId: "quantum-link-for-chat",
+    storageBucket: "quantum-link-for-chat.firebasestorage.app",
+    messagingSenderId: "222382991426",
+    appId: "1:222382991426:web:43326da4ed94d7fb37a5db"
+  };
 
-    signupBtn.onclick = async () => {
-      await createUserWithEmailAndPassword(auth, email.value, password.value);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+  const loginBtn = document.getElementById("loginBtn");
+  const showRegisterBtn = document.getElementById("showRegisterBtn");
+  const registerBtn = document.getElementById("registerBtn");
+  const title = document.getElementById("title");
+
+  // 🔐 すでにログインしてたら chat へ
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      location.href = "chat.html";
+    }
+  });
+
+  // ログイン
+  loginBtn.onclick = async () => {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!email || !password) {
+      alert("メールとパスワードを入力してください");
+      return;
+    }
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      location.href = "chat.html";
+    } catch (e) {
+      alert(e.code + " : " + e.message);
+    }
+  };
+
+  // 新規登録画面に切り替え
+  showRegisterBtn.onclick = () => {
+    title.textContent = "新規登録";
+    loginBtn.classList.add("hidden");
+    showRegisterBtn.classList.add("hidden");
+    registerBtn.classList.remove("hidden");
+  };
+
+  // 新規登録
+  registerBtn.onclick = async () => {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!email || !password) {
+      alert("メールとパスワードを入力してください");
+      return;
+    }
+
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
       location.href = "profile.html";
-    };
-  </script>
+    } catch (e) {
+      alert(e.code + " : " + e.message);
+    }
+  };
+</script>
+
 </body>
 </html>
