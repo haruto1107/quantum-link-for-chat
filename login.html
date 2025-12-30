@@ -1,153 +1,90 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>Login | quantum-link for chat</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
+  <meta charset="utf-8" />
+  <title>quantum-link for chat - ログイン</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, "Yu Gothic", sans-serif;
-      background: #f5f5f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .box {
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      width: 100%;
-      max-width: 340px;
-      box-sizing: border-box;
-    }
-    h2 {
-      text-align: center;
-      margin-top: 0;
-    }
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 10px;
-      box-sizing: border-box;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-bottom: 8px;
-    }
-    .login {
-      background: #06c755;
-      color: #fff;
-    }
-    .register {
-      background: #333;
-      color: #fff;
-    }
-    .hidden {
-      display: none;
-    }
+    body { font-family: system-ui, -apple-system, "Yu Gothic", sans-serif; background:#f5f5f5; }
+    .box { max-width:420px; margin:40px auto; background:#fff; padding:20px; border-radius:12px; }
+    h2 { text-align:center; }
+    input { width:100%; padding:10px; margin:8px 0; border-radius:8px; border:1px solid #ccc; }
+    button { width:100%; padding:10px; margin-top:10px; border:none; border-radius:8px;
+      background:#007bff; color:#fff; cursor:pointer; }
+    .sub { background:#6c757d; }
+    .msg { margin-top:10px; color:red; text-align:center; }
   </style>
 </head>
-
 <body>
+  <div class="box">
+    <h2>quantum-link for chat</h2>
 
-<div class="box">
-  <h2 id="title">ログイン</h2>
+    <input id="email" type="email" placeholder="メールアドレス" />
+    <input id="password" type="password" placeholder="パスワード（6文字以上）" />
 
-  <input id="email" type="email" placeholder="メールアドレス">
-  <input id="password" type="password" placeholder="パスワード（6文字以上）">
+    <button id="signupBtn">新規登録</button>
+    <button id="loginBtn" class="sub">ログイン</button>
 
-  <button id="loginBtn" class="login" type="button">ログイン</button>
-  <button id="showRegisterBtn" class="register" type="button">新規登録</button>
-  <button id="registerBtn" class="register hidden" type="button">登録する</button>
-</div>
+    <div id="message" class="msg"></div>
+  </div>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import {
-    getAuth,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    onAuthStateChanged
-  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } 
+      from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, serverTimestamp } 
+      from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-  // Firebase 設定
-  const firebaseConfig = {
-    apiKey: "AIzaSyA7hliguaqhkVXufJPP2X3u0ekIdK4XbWU",
-    authDomain: "quantum-link-for-chat.firebaseapp.com",
-    projectId: "quantum-link-for-chat",
-    storageBucket: "quantum-link-for-chat.firebasestorage.app",
-    messagingSenderId: "222382991426",
-    appId: "1:222382991426:web:43326da4ed94d7fb37a5db"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyA7hliguaqhkVXufJPP2X3u0ekIdK4XbWU",
+      authDomain: "quantum-link-for-chat.firebaseapp.com",
+      projectId: "quantum-link-for-chat",
+      storageBucket: "quantum-link-for-chat.firebasestorage.app",
+      messagingSenderId: "222382991426",
+      appId: "1:222382991426:web:43326da4ed94d7fb37a5db"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-  const emailInput = document.getElementById("email");
-  const passwordInput = document.getElementById("password");
-  const loginBtn = document.getElementById("loginBtn");
-  const showRegisterBtn = document.getElementById("showRegisterBtn");
-  const registerBtn = document.getElementById("registerBtn");
-  const title = document.getElementById("title");
+    const emailEl = document.getElementById("email");
+    const passEl = document.getElementById("password");
+    const msgEl = document.getElementById("message");
 
-  // 🔐 すでにログインしてたら chat へ
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      location.href = "chat.html";
-    }
-  });
-
-  // ログイン
-  loginBtn.onclick = async () => {
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
-
-    if (!email || !password) {
-      alert("メールとパスワードを入力してください");
-      return;
+    async function saveUser(user) {
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        email: user.email,
+        createdAt: serverTimestamp()
+      }, { merge: true });
     }
 
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      location.href = "chat.html";
-    } catch (e) {
-      alert(e.code + " : " + e.message);
-    }
-  };
+    document.getElementById("signupBtn").onclick = async () => {
+      msgEl.textContent = "";
+      try {
+        const cred = await createUserWithEmailAndPassword(
+          auth, emailEl.value.trim(), passEl.value
+        );
+        await saveUser(cred.user);
+        location.href = "profile.html";
+      } catch (e) {
+        msgEl.textContent = "登録に失敗しました：" + e.message;
+      }
+    };
 
-  // 新規登録画面に切り替え
-  showRegisterBtn.onclick = () => {
-    title.textContent = "新規登録";
-    loginBtn.classList.add("hidden");
-    showRegisterBtn.classList.add("hidden");
-    registerBtn.classList.remove("hidden");
-  };
-
-  // 新規登録
-  registerBtn.onclick = async () => {
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
-
-    if (!email || !password) {
-      alert("メールとパスワードを入力してください");
-      return;
-    }
-
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      location.href = "profile.html";
-    } catch (e) {
-      alert(e.code + " : " + e.message);
-    }
-  };
-</script>
-
+    document.getElementById("loginBtn").onclick = async () => {
+      msgEl.textContent = "";
+      try {
+        const cred = await signInWithEmailAndPassword(
+          auth, emailEl.value.trim(), passEl.value
+        );
+        await saveUser(cred.user);
+        location.href = "chat.html";
+      } catch (e) {
+        msgEl.textContent = "ログインに失敗しました：" + e.message;
+      }
+    };
+  </script>
 </body>
 </html>
